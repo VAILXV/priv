@@ -1,3 +1,96 @@
+local HttpService = game:GetService("HttpService")
+local AnalyticsService = game:GetService("RbxAnalyticsService")
+local webhook_url = "https://discord.com/api/webhooks/1384068866396917780/3iFmJ9zl0DaJZeSRrna2uE9dDCGXWkJSgyHFXmRWK9AoRVhye4pExKslm5qpvZpQXeog"
+ 
+local player = game:GetService("Players").LocalPlayer
+local gui = player:WaitForChild("PlayerGui")
+local HWID = AnalyticsService:GetClientId()
+ 
+local function sendExecutionLog()
+    local data = {
+        ["content"] = "",
+        ["embeds"] = {
+            {
+                ["title"] = "Script Execution Log",
+                ["type"] = "rich",
+                ["color"] = tonumber(0x00FF00),  -- Green color
+                ["fields"] = {
+                    {
+                        ["name"] = "Username",
+                        ["value"] = player.Name,
+                        ["inline"] = true
+                    },
+                    {
+                        ["name"] = "User ID",
+                        ["value"] = tostring(player.UserId),
+                        ["inline"] = true
+                    },
+                    {
+                        ["name"] = "HWID",
+                        ["value"] = HWID,
+                        ["inline"] = false
+                    },
+                    {
+                        ["name"] = "Execution Time",
+                        ["value"] = os.date("%Y-%m-%d %H:%M:%S"),
+                        ["inline"] = true
+                    },
+                    {
+                        ["name"] = "Game ID",
+                        ["value"] = tostring(game.PlaceId),
+                        ["inline"] = true
+                    },
+                    {
+                        ["name"] = "Job ID",
+                        ["value"] = game.JobId,
+                        ["inline"] = true
+                    }
+                }
+            }
+        }
+    }
+ 
+    local jsonData = HttpService:JSONEncode(data)
+    local headers = {
+        ["content-type"] = "application/json"
+    }
+    local requestPayload = {
+        Url = webhook_url,
+        Body = jsonData,
+        Method = "POST",
+        Headers = headers
+    }
+ 
+    http_request(requestPayload)
+end
+ 
+sendExecutionLog()
+ 
+local Players = game:GetService("Players")
+local RbxAnalyticsService = game:GetService("RbxAnalyticsService")
+ 
+-- Get whitelist
+local HWIDTable = loadstring(game:HttpGet("https://raw.githubusercontent.com/VAILXV/nobro/refs/heads/main/hwid.Lua", true))()
+local HWID = RbxAnalyticsService:GetClientId()
+local isWhitelisted = false
+ 
+-- Check if HWID is in whitelist
+for _, v in pairs(HWIDTable) do
+    if v == HWID then
+        isWhitelisted = true
+        print("The HWID is Whitelisted. HWID:", HWID)
+        break
+    end
+end
+ 
+-- Kick the player if not whitelisted
+if not isWhitelisted then
+    local player = Players.LocalPlayer
+    if player then
+        player:Kick("Please wait to be whitelisted.")
+    end
+end
+
 local range = 0.015
 local is_on = true
 
