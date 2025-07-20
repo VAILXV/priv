@@ -103,7 +103,7 @@ local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:FindFirstChild("HumanoidRootPart")
 
-local Teleport = Tabs.Main:AddRightGroupbox('Teleports')
+--[[local Teleport = Tabs.Main:AddRightGroupbox('Teleports')
 Teleport:AddButton({ Text = 'Clothing Store', Func = function() if hrp then hrp.CFrame = CFrame.new(887, 317, -318) end end })
 Teleport:AddButton({ Text = 'Gun Store', Func = function() if hrp then hrp.CFrame = CFrame.new(192, 318, 957) end end })
 Teleport:AddButton({ Text = 'Shoe Store', Func = function() if hrp then hrp.CFrame = CFrame.new(2468, 284, -374) end end })
@@ -115,7 +115,7 @@ Teleport:AddButton({ Text = 'ATM', Func = function() if hrp then hrp.CFrame = CF
 Teleport:AddButton({ Text = 'Wash Money', Func = function() if hrp then hrp.CFrame = CFrame.new(2449, 286, -1332) end end })
 Teleport:AddButton({ Text = 'Gun Store', Func = function() if hrp then hrp.CFrame = CFrame.new(192, 318, 957) end end })
 Teleport:AddButton({ Text = 'Trash Job', Func = function() if hrp then hrp.CFrame = CFrame.new(288, 317, 794) end end })
-Teleport:AddButton({ Text = 'Mask', Func = function() if hrp then hrp.CFrame = CFrame.new(900, 318, -338) end end })
+Teleport:AddButton({ Text = 'Mask', Func = function() if hrp then hrp.CFrame = CFrame.new(900, 318, -338) end end })]]
 
 Teleport:AddDivider()
 
