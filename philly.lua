@@ -23,86 +23,63 @@ local Misc = Tabs.Main:AddRightGroupbox('Misc')
 
 local TrashFarmEnabled = false
 
-Main:AddToggle('Trash Farm', {Text = 'Trash Farm', Default = false, Tooltip = 'USE SCRIPT ON ALT ONLY!!', Callback = function(value) TrashFarmEnabled = value end})
+Main:AddToggle('Trash Farm', {Text = 'Trash Farm', Default = false, Tooltip = 'USE SCRIPT ON ALT ONLY!!', Callback = function(value) TrashFarmEnabled = value if value then
+            spawn(function()
+                local function walkTo(position)
+                    local player = game.Players.LocalPlayer
+                    local char = player.Character or player.CharacterAdded:Wait()
+                    local hrp = char:FindFirstChild("HumanoidRootPart")
+                    local humanoid = char:FindFirstChildOfClass("Humanoid")
+                    if hrp and humanoid then
+                        humanoid:MoveTo(position)
+                        humanoid.MoveToFinished:Wait()
+                    end
+                end
 
-spawn(function()
-    local PathfindingService = game:GetService("PathfindingService")
-    local player = game.Players.LocalPlayer
+                while TrashFarmEnabled do
+                    local player = game.Players.LocalPlayer
+                    local char = player.Character or player.CharacterAdded:Wait()
+                    local trashPos = workspace.Interactions.toolInteractions.TrashPart.Position
+                    walkTo(trashPos)
+                    wait(1)
+                    local trashPrompt = workspace.Interactions.toolInteractions.TrashPart.Interaction
+                    trashPrompt.HoldDuration = 0
+                    trashPrompt.Enabled = true
+                    trashPrompt.RequiresLineOfSight = false
+                    trashPrompt.MaxActivationDistance = 10
 
-    local function walkTo(part)
-        local char = player.Character or player.CharacterAdded:Wait()
-        local hrp = char:FindFirstChild("HumanoidRootPart")
-        local humanoid = char:FindFirstChildOfClass("Humanoid")
-        if not hrp or not humanoid or not part then return false end
+                    trashPrompt:InputHoldBegin()
+                    wait(0.1)
+                    trashPrompt:InputHoldEnd()
 
-        local path = PathfindingService:CreatePath({
-            AgentRadius = 2,
-            AgentHeight = 5,
-            AgentCanJump = true,
-            AgentJumpHeight = 10,
-            AgentMaxSlope = 45,
-            })
-        path:ComputeAsync(hrp.Position, part.Position)
-        if path.Status == Enum.PathStatus.Complete then
-            local waypoints = path:GetWaypoints()
-            for _, waypoint in ipairs(waypoints) do
-                humanoid:MoveTo(waypoint.Position)
-                humanoid.MoveToFinished:Wait()
-            end
-            return true
-        else
-            -- fallback: direct move
-            humanoid:MoveTo(part.Position)
-            humanoid.MoveToFinished:Wait()
-            return false
+                    wait(0.5)
+                    local backpack = player.Backpack
+                    local trashBag = backpack:FindFirstChild("Trash Bag")
+                    if trashBag then
+                        trashBag.Parent = char
+                    end
+                    wait(0.5)
+                    local sellPos = workspace.Interactions.sellInteractions.trashPart.Position
+                    walkTo(sellPos)
+
+                    local sellPrompt = workspace.Interactions.sellInteractions.trashPart.Interaction
+                    sellPrompt.HoldDuration = 0
+                    sellPrompt.Enabled = true
+                    sellPrompt.RequiresLineOfSight = false
+                    sellPrompt.MaxActivationDistance = 10
+
+                    wait(0.5)
+
+                    sellPrompt:InputHoldBegin()
+                    wait(0.1)
+                    sellPrompt:InputHoldEnd()
+
+                    wait(1)
+                end
+            end)
         end
     end
-
-    while true do
-        if TrashFarmEnabled then
-            local char = player.Character or player.CharacterAdded:Wait()
-            local trashPart = workspace.Interactions.toolInteractions.TrashPart
-            walkTo(trashPart)
-
-            wait(1)
-            local trashPrompt = trashPart.Interaction
-            trashPrompt.HoldDuration = 0
-            trashPrompt.Enabled = true
-            trashPrompt.RequiresLineOfSight = false
-            trashPrompt.MaxActivationDistance = 10
-
-            trashPrompt:InputHoldBegin()
-            wait(0.1)
-            trashPrompt:InputHoldEnd()
-
-            wait(0.5)
-            local backpack = player.Backpack
-            local trashBag = backpack:FindFirstChild("Trash Bag")
-            if trashBag then
-                trashBag.Parent = char
-            end
-            wait(0.5)
-            local sellPart = workspace.Interactions.sellInteractions.trashPart
-            walkTo(sellPart)
-
-            local sellPrompt = sellPart.Interaction
-            sellPrompt.HoldDuration = 0
-            sellPrompt.Enabled = true
-            sellPrompt.RequiresLineOfSight = false
-            sellPrompt.MaxActivationDistance = 10
-
-            wait(0.5)
-
-            sellPrompt:InputHoldBegin()
-            wait(0.1)
-            sellPrompt:InputHoldEnd()
-
-            wait(1)
-        else
-            wait(0.5)
-        end
-    end
-end)
+})
 
 
 
