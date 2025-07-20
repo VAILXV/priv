@@ -32,7 +32,19 @@ Main:AddToggle('Trash Farm', {Text = 'Trash Farm', Default = false, Tooltip = 'U
                     local humanoid = char:FindFirstChildOfClass("Humanoid")
                     if hrp and humanoid then
                         humanoid:MoveTo(position)
-                        humanoid.MoveToFinished:Wait()
+                        local finished = false
+                        local conn
+                        conn = humanoid.MoveToFinished:Connect(function()
+                            finished = true
+                        end)
+                        local startTime = tick()
+                        while not finished and (tick() - startTime) < 5 do
+                            if (hrp.Position - position).Magnitude < 3 then
+                                break
+                            end
+                            wait(0.1)
+                        end
+                        if conn then conn:Disconnect() end
                     end
                 end
 
