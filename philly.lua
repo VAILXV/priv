@@ -59,6 +59,10 @@ Main:AddToggle('Trash Farm', {Text = 'Trash Farm', Default = false, Tooltip = 'U
                         trashBag.Parent = char
                     end
                     wait(0.5)
+                    -- Wait until the Trash Bag is equipped before moving to sell position
+                    while not (char:FindFirstChild("Trash Bag")) do
+                        wait(0.1)
+                    end
                     local sellPos = workspace.Interactions.sellInteractions.trashPart.Position
                     walkTo(sellPos)
 
