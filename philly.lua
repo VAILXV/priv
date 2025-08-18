@@ -9,6 +9,8 @@ local Tabs = {Main = Window:AddTab('Main'),['UI Settings'] = Window:AddTab('UI S
 local VirtualUser = game:GetService('VirtualUser')
 local StarterGui = game:GetService('StarterGui')
 
+game:GetService("StarterPlayer").StarterCharacterScripts.Important.Disabled = true
+
 StarterGui:SetCore("SendNotification", { Title = "Anti-AFK", Text = "Script Activated", Duration = 5 })
 
 game.Players.LocalPlayer.Idled:Connect(function()
@@ -20,102 +22,111 @@ local ShootGroupBox = Tabs.Main:AddLeftGroupbox('Shooting')
 local Main = Tabs.Main:AddLeftGroupbox('Farms (More Soon)')
 local Misc = Tabs.Main:AddRightGroupbox('Misc')
 
+local TrashFarm = false
 
-local TrashFarmEnabled = false
+Main:AddToggle('Trash Farm', {Text = 'Trash Farm', Default = false, Tooltip = 'USE SCRIPT ON ALT ONLY!!', Callback = function(value) TrashFarm = value end})
 
-Main:AddToggle('Trash Farm', {Text = 'Trash Farm', Default = false, Tooltip = 'USE SCRIPT ON ALT ONLY!!', Callback = function(value) TrashFarmEnabled = value if value then
-            spawn(function()
-                local function walkTo(position)
-                    local player = game.Players.LocalPlayer
-                    local char = player.Character or player.CharacterAdded:Wait()
-                    local hrp = char:FindFirstChild("HumanoidRootPart")
-                    local humanoid = char:FindFirstChildOfClass("Humanoid")
-                    if hrp and humanoid then
-                        humanoid:MoveTo(position)
-                        local finished = false
-                        local conn
-                        conn = humanoid.MoveToFinished:Connect(function()
-                            finished = true
-                        end)
-                        local startTime = tick()
-                        while not finished and (tick() - startTime) < 5 do
-                            if (hrp.Position - position).Magnitude < 3 then
-                                break
-                            end
-                            wait(0.1)
-                        end
-                        if conn then conn:Disconnect() end
-                    end
-                end
+local player = game.Players.LocalPlayer
+local character = player.Character or player.CharacterAdded:Wait()
+local hrp = character:FindFirstChild("HumanoidRootPart")
 
-                while TrashFarmEnabled do
-                    local player = game.Players.LocalPlayer
-                    local char = player.Character or player.CharacterAdded:Wait()
-                    local trashPos = workspace.Interactions.toolInteractions.TrashPart.Position
-                    walkTo(trashPos)
-                    wait(1)
-                    local trashPrompt = workspace.Interactions.toolInteractions.TrashPart.Interaction
-                    trashPrompt.HoldDuration = 0
-                    trashPrompt.Enabled = true
-                    trashPrompt.RequiresLineOfSight = false
-                    trashPrompt.MaxActivationDistance = 10
+local TweenService = game:GetService("TweenService")
 
-                    trashPrompt:InputHoldBegin()
-                    wait(0.1)
-                    trashPrompt:InputHoldEnd()
+local trashPart = workspace.Interactions.toolInteractions.TrashPart
+local sellTrashPart = workspace.Interactions.sellInteractions.trashPart
 
-                    wait(0.5)
-                    local backpack = player.Backpack
-                    local trashBag = backpack:FindFirstChild("Trash Bag")
-                    if trashBag then
-                        trashBag.Parent = char
-                    end
-                    wait(0.5)
-                    -- Wait until the Trash Bag is equipped before moving to sell position
-                    while not (char:FindFirstChild("Trash Bag")) do
-                        wait(0.1)
-                    end
-                    local sellPos = workspace.Interactions.sellInteractions.trashPart.Position
-                    walkTo(sellPos)
+local speed = 300
 
-                    local sellPrompt = workspace.Interactions.sellInteractions.trashPart.Interaction
-                    sellPrompt.HoldDuration = 0
-                    sellPrompt.Enabled = true
-                    sellPrompt.RequiresLineOfSight = false
-                    sellPrompt.MaxActivationDistance = 10
+local function tweenToCFrame(targetCFrame, callback)
+    if hrp then
+        local distance = (hrp.Position - targetCFrame.Position).Magnitude
+        local duration = distance / speed
+        local tween = TweenService:Create(hrp, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+        if callback then
+            tween.Completed:Connect(callback)
+        end
+        tween:Play()
+    end
+end
 
-                    wait(0.5)
-
-                    sellPrompt:InputHoldBegin()
-                    wait(0.1)
-                    sellPrompt:InputHoldEnd()
-
-                    wait(1)
-                end
-            end)
+local function firePrompt(part)
+    if part then
+        local prompt = part:FindFirstChildOfClass("ProximityPrompt")
+        if prompt then
+            prompt.HoldDuration = 0
+            task.wait(0.1)
+            prompt:InputHoldBegin()
+            task.wait(0.1)
+            prompt:InputHoldEnd()
         end
     end
-})
+end
 
+local function equip_Tool(toolName)
+    local backpack = player:FindFirstChildOfClass("Backpack")
+    if backpack then
+        local tool = backpack:FindFirstChild(toolName)
+        if tool then
+            tool.Parent = character
+        end
+    end
+end
+
+task.spawn(function()
+    while true do
+        if TrashFarm then
+            tweenToCFrame(CFrame.new(trashPart.Position), function()
+                firePrompt(trashPart)
+                task.wait(0.5)
+                equip_Tool("Trash Bag")
+                tweenToCFrame(CFrame.new(sellTrashPart.Position), function()
+                    task.wait(0.1)
+                    local prompt = sellTrashPart:FindFirstChildOfClass("ProximityPrompt")
+                    if prompt then
+                        prompt.HoldDuration = 0
+                        task.wait(0.1)
+                        prompt:InputHoldBegin()
+                        task.wait(0.1)
+                        prompt:InputHoldEnd()
+                    end
+                end)
+            end)
+            task.wait(2)
+        else
+            task.wait(0.5)
+        end
+    end
+end)
 
 
 local player = game.Players.LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:FindFirstChild("HumanoidRootPart")
 
---[[local Teleport = Tabs.Main:AddRightGroupbox('Teleports')
-Teleport:AddButton({ Text = 'Clothing Store', Func = function() if hrp then hrp.CFrame = CFrame.new(887, 317, -318) end end })
-Teleport:AddButton({ Text = 'Gun Store', Func = function() if hrp then hrp.CFrame = CFrame.new(192, 318, 957) end end })
-Teleport:AddButton({ Text = 'Shoe Store', Func = function() if hrp then hrp.CFrame = CFrame.new(2468, 284, -374) end end })
-Teleport:AddButton({ Text = 'P Mobile', Func = function() if hrp then hrp.CFrame = CFrame.new(693, 317, -77) end end })
-Teleport:AddButton({ Text = 'Printer Guy ', Func = function() if hrp then hrp.CFrame = CFrame.new(-134, 317, 161) end end })
-Teleport:AddButton({ Text = 'Guapo', Func = function() if hrp then hrp.CFrame = CFrame.new(177, 317, -165) end end })
-Teleport:AddButton({ Text = 'Apartments', Func = function() if hrp then hrp.CFrame = CFrame.new(214, 317, 83) end end })
-Teleport:AddButton({ Text = 'ATM', Func = function() if hrp then hrp.CFrame = CFrame.new(172, 317, 270) end end })
-Teleport:AddButton({ Text = 'Wash Money', Func = function() if hrp then hrp.CFrame = CFrame.new(2449, 286, -1332) end end })
-Teleport:AddButton({ Text = 'Gun Store', Func = function() if hrp then hrp.CFrame = CFrame.new(192, 318, 957) end end })
-Teleport:AddButton({ Text = 'Trash Job', Func = function() if hrp then hrp.CFrame = CFrame.new(288, 317, 794) end end })
-Teleport:AddButton({ Text = 'Mask', Func = function() if hrp then hrp.CFrame = CFrame.new(900, 318, -338) end end })]]
+local Teleport = Tabs.Main:AddRightGroupbox('Teleports')
+local TweenService = game:GetService("TweenService")
+
+local function tweenToPosition(targetCFrame, speed)
+    if hrp then
+        local distance = (hrp.Position - targetCFrame.Position).Magnitude
+        local duration = distance / speed
+        local tween = TweenService:Create(hrp, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
+        tween:Play()
+    end
+end
+
+Teleport:AddButton({ Text = 'Clothing Store', Func = function() tweenToPosition(CFrame.new(887, 317, -318), 350) end })
+Teleport:AddButton({ Text = 'Gun Store', Func = function() tweenToPosition(CFrame.new(192, 318, 957), 350) end })
+Teleport:AddButton({ Text = 'Shoe Store', Func = function() tweenToPosition(CFrame.new(2468, 284, -374), 350) end })
+Teleport:AddButton({ Text = 'P Mobile', Func = function() tweenToPosition(CFrame.new(693, 317, -77), 350) end })
+Teleport:AddButton({ Text = 'Printer Guy ', Func = function() tweenToPosition(CFrame.new(-134, 317, 161), 350) end })
+Teleport:AddButton({ Text = 'Guapo', Func = function() tweenToPosition(CFrame.new(177, 317, -165), 350) end })
+Teleport:AddButton({ Text = 'Apartments', Func = function() tweenToPosition(CFrame.new(214, 317, 83), 350) end })
+Teleport:AddButton({ Text = 'ATM', Func = function() tweenToPosition(CFrame.new(172, 317, 270), 450) end })
+Teleport:AddButton({ Text = 'Wash Money', Func = function() tweenToPosition(CFrame.new(2449, 286, -1332), 350) end })
+Teleport:AddButton({ Text = 'Gun Store', Func = function() tweenToPosition(CFrame.new(192, 318, 957), 350) end })
+Teleport:AddButton({ Text = 'Trash Job', Func = function() tweenToPosition(CFrame.new(288, 317, 794), 350) end })
+Teleport:AddButton({ Text = 'Mask', Func = function() tweenToPosition(CFrame.new(900, 318, -338), 350) end })
 
 Teleport:AddDivider()
 
@@ -335,86 +346,6 @@ AimLockToggle:OnChanged(function()
 end)
 
 AimLockToggle:SetValue(false)
-
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local LocalPlayer = Players.LocalPlayer
-
-local function createESP(player)
-    if player == LocalPlayer then return end
-    local character = player.Character
-    if not character then return end
-    local head = character:FindFirstChild("Head")
-    if not head then return end
-
-    local billboard = Instance.new("BillboardGui")
-    billboard.Name = "ESP"
-    billboard.Adornee = head
-    billboard.Size = UDim2.new(0, 200, 0, 50)
-    billboard.StudsOffset = Vector3.new(0, 2, 0)
-    billboard.AlwaysOnTop = true
-
-    local textLabel = Instance.new("TextLabel")
-    textLabel.Name = "ESPLabel"
-    textLabel.Size = UDim2.new(1, 0, 1, 0)
-    textLabel.BackgroundTransparency = 1
-    textLabel.TextColor3 = Color3.new(1, 1, 1)
-    textLabel.TextStrokeTransparency = 0
-    textLabel.Font = Enum.Font.SourceSansBold
-    textLabel.TextScaled = true
-    textLabel.Text = player.Name
-    textLabel.Parent = billboard
-
-    billboard.Parent = head
-end
-
-local function removeAllESP()
-    for _, player in Players:GetPlayers() do
-        if player ~= LocalPlayer and player.Character then
-            local head = player.Character:FindFirstChild("Head")
-            if head then
-                local esp = head:FindFirstChild("ESP")
-                if esp then
-                    esp:Destroy()
-                end
-            end
-        end
-    end
-end
-
--- ESP Update Loop
-RunService.RenderStepped:Connect(function()
-    if not _G.ESP then return end
-
-    for _, player in Players:GetPlayers() do
-        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Head") then
-            local head = player.Character.Head
-            local esp = head:FindFirstChild("ESP")
-            if not esp then
-                createESP(player)
-            else
-                local label = esp:FindFirstChild("ESPLabel")
-                if label and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Head") then
-                    local distance = (LocalPlayer.Character.Head.Position - head.Position).Magnitude
-                    label.Text = player.Name .. " | " .. math.floor(distance) .. " studs"
-                end
-            end
-        end
-    end
-end)
-
--- 🔘 Linoria Toggle
-local Esp = ShootGroupBox:AddToggle('ESP', {
-    Text = 'ESP',
-    Default = false,
-    Callback = function(state)
-        _G.ESP = state
-        if not state then
-            removeAllESP()
-        end
-    end
-})
 
 
 local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
