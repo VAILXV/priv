@@ -126,7 +126,83 @@ Teleport:AddButton({ Text = 'Gun Store', Func = function() teleportToPosition(CF
 Teleport:AddButton({ Text = 'Trash Job', Func = function() teleportToPosition(CFrame.new(288, 317, 794)) end })
 Teleport:AddButton({ Text = 'Black Market', Func = function() teleportToPosition(CFrame.new(315, 317, 1096)) end })
 Teleport:AddButton({ Text = 'Mask', Func = function() teleportToPosition(CFrame.new(900, 318, -338)) end })
+Teleport:AddDivider()
+local function openShoeGui()
+	local player = game.Players.LocalPlayer
+	local screenGui = Instance.new("ScreenGui", player.PlayerGui)
+	screenGui.Name = "MachinesGui"
 
+	local scrollingFrame = Instance.new("ScrollingFrame", screenGui)
+	scrollingFrame.Size = UDim2.new(0, 300, 0, 400)
+	scrollingFrame.Position = UDim2.new(0, 10, 0, 10)
+	scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+	scrollingFrame.ScrollBarThickness = 8
+
+	-- Destroy button
+	local destroyBtn = Instance.new("TextButton")
+	destroyBtn.Size = UDim2.new(0, 100, 0, 40)
+	destroyBtn.Position = UDim2.new(1, -110, 0, 10)
+	destroyBtn.Text = "Destroy GUI"
+	destroyBtn.Parent = screenGui
+
+	destroyBtn.MouseButton1Click:Connect(function()
+		screenGui:Destroy()
+	end)
+
+	local function createMachineButton(machine, display)
+		local button = Instance.new("TextButton")
+		button.Size = UDim2.new(1, -10, 0, 40)
+
+		button.MouseButton1Click:Connect(function()
+			local char = player.Character
+			if char and char:FindFirstChild("Humanoid") and char:FindFirstChild("HumanoidRootPart") then
+				char.Humanoid.Sit = true
+				char.HumanoidRootPart.CFrame = machine.PrimaryPart and machine.PrimaryPart.CFrame or machine:GetModelCFrame()
+			end
+		end)
+		button.Position = UDim2.new(0, 5, 0, 0)
+		button.Text = machine.Name .. ": " .. display.TimeRemaining.Text
+		button.Parent = scrollingFrame
+
+		button.MouseButton1Click:Connect(function()
+			local char = player.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				char.HumanoidRootPart.CFrame = machine.PrimaryPart and machine.PrimaryPart.CFrame or machine:GetModelCFrame()
+			end
+		end)
+
+		return button
+	end
+
+	local function updateGui()
+		scrollingFrame:ClearAllChildren()
+		local y = 0
+		for _, machine in ipairs(workspace.RepzMachines:GetChildren()) do
+			if machine:FindFirstChild("MachineScreen") and machine.MachineScreen:FindFirstChild("Display") then
+				local display = machine.MachineScreen.Display
+				if display:FindFirstChild("TimeRemaining") then
+					local btn = createMachineButton(machine, display)
+					btn.Position = UDim2.new(0, 5, 0, y)
+					y = y + 45
+				end
+			end
+		end
+		scrollingFrame.CanvasSize = UDim2.new(0, 0, 0, y)
+	end
+
+	-- Update every second
+	spawn(function()
+		while screenGui.Parent do
+			updateGui()
+			wait(1)
+		end
+	end)
+end
+
+Teleport:AddButton({
+	Text = 'Open Shoe GUI',
+	Func = openShoeGui
+})
 Teleport:AddDivider()
 
 Misc:AddButton('Get Low Server', function()
