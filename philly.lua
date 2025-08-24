@@ -200,7 +200,7 @@ local function openShoeGui()
 end
 
 Teleport:AddButton({
-	Text = 'Open Shoe GUI',
+	Text = 'Open Shoe UI',
 	Func = openShoeGui
 })
 Teleport:AddDivider()
