@@ -10,6 +10,8 @@ local VirtualUser = game:GetService('VirtualUser')
 local StarterGui = game:GetService('StarterGui')
 
 game:GetService("StarterPlayer").StarterCharacterScripts.Important.Disabled = true
+local player = game.Players.LocalPlayer
+workspace[player.Name].Important.Enabled = false
 
 StarterGui:SetCore("SendNotification", { Title = "Anti-AFK", Text = "Script Activated", Duration = 5 })
 
@@ -104,30 +106,26 @@ local character = player.Character or player.CharacterAdded:Wait()
 local hrp = character:FindFirstChild("HumanoidRootPart")
 
 local Teleport = Tabs.Main:AddRightGroupbox('Teleports')
-local TweenService = game:GetService("TweenService")
-
-local function tweenToPosition(targetCFrame, speed)
-    if hrp then
-        local distance = (hrp.Position - targetCFrame.Position).Magnitude
-        local duration = distance / speed
-        local tween = TweenService:Create(hrp, TweenInfo.new(duration, Enum.EasingStyle.Linear), {CFrame = targetCFrame})
-        tween:Play()
+local function teleportToPosition(targetCFrame)
+    if hrp and character:FindFirstChild("Humanoid") then
+        character.Humanoid.Sit = true
+        hrp.CFrame = targetCFrame
     end
 end
 
-Teleport:AddButton({ Text = 'Clothing Store', Func = function() tweenToPosition(CFrame.new(887, 317, -318), 250) end })
-Teleport:AddButton({ Text = 'Gun Store', Func = function() tweenToPosition(CFrame.new(192, 318, 957), 250) end })
-Teleport:AddButton({ Text = 'Shoe Store', Func = function() tweenToPosition(CFrame.new(2468, 284, -374), 250) end })
-Teleport:AddButton({ Text = 'P Mobile', Func = function() tweenToPosition(CFrame.new(693, 317, -77), 320) end })
-Teleport:AddButton({ Text = 'Printer Guy ', Func = function() tweenToPosition(CFrame.new(-134, 317, 161), 250) end })
-Teleport:AddButton({ Text = 'Guapo', Func = function() tweenToPosition(CFrame.new(177, 317, -165), 250) end })
-Teleport:AddButton({ Text = 'Apartments', Func = function() tweenToPosition(CFrame.new(214, 317, 83), 250) end })
-Teleport:AddButton({ Text = 'ATM', Func = function() tweenToPosition(CFrame.new(172, 317, 270), 450) end })
-Teleport:AddButton({ Text = 'Wash Money', Func = function() tweenToPosition(CFrame.new(-0, 317, 935), 250) end })
-Teleport:AddButton({ Text = 'Gun Store', Func = function() tweenToPosition(CFrame.new(192, 318, 957), 250) end })
-Teleport:AddButton({ Text = 'Trash Job', Func = function() tweenToPosition(CFrame.new(288, 317, 794), 250) end })
-Teleport:AddButton({ Text = 'Black Market', Func = function() tweenToPosition(CFrame.new(315, 317, 1096), 250) end })
-Teleport:AddButton({ Text = 'Mask', Func = function() tweenToPosition(CFrame.new(900, 318, -338), 250) end })
+Teleport:AddButton({ Text = 'Clothing Store', Func = function() teleportToPosition(CFrame.new(887, 317, -318)) end })
+Teleport:AddButton({ Text = 'Gun Store', Func = function() teleportToPosition(CFrame.new(192, 318, 957)) end })
+Teleport:AddButton({ Text = 'Shoe Store', Func = function() teleportToPosition(CFrame.new(2468, 284, -374)) end })
+Teleport:AddButton({ Text = 'P Mobile', Func = function() teleportToPosition(CFrame.new(693, 317, -77)) end })
+Teleport:AddButton({ Text = 'Printer Guy ', Func = function() teleportToPosition(CFrame.new(-134, 317, 161)) end })
+Teleport:AddButton({ Text = 'Guapo', Func = function() teleportToPosition(CFrame.new(177, 317, -165)) end })
+Teleport:AddButton({ Text = 'Apartments', Func = function() teleportToPosition(CFrame.new(214, 317, 83)) end })
+Teleport:AddButton({ Text = 'ATM', Func = function() teleportToPosition(CFrame.new(172, 317, 270)) end })
+Teleport:AddButton({ Text = 'Wash Money', Func = function() teleportToPosition(CFrame.new(-0, 317, 935)) end })
+Teleport:AddButton({ Text = 'Gun Store', Func = function() teleportToPosition(CFrame.new(192, 318, 957)) end })
+Teleport:AddButton({ Text = 'Trash Job', Func = function() teleportToPosition(CFrame.new(288, 317, 794)) end })
+Teleport:AddButton({ Text = 'Black Market', Func = function() teleportToPosition(CFrame.new(315, 317, 1096)) end })
+Teleport:AddButton({ Text = 'Mask', Func = function() teleportToPosition(CFrame.new(900, 318, -338)) end })
 
 Teleport:AddDivider()
 
