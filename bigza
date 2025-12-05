@@ -193,7 +193,7 @@ then
             task.spawn(function()
                 local bot = LocalPlayer
 
-                while task.wait(4) do
+                while task.wait(2.7) do
                     if _G.BlockArcade then break end
                     if not bot.Backpack.InGame.Value then continue end
 
@@ -291,7 +291,7 @@ then
             task.spawn(function()
                 local main = LocalPlayer
 
-                while task.wait(4) do
+                while task.wait(2.7) do
                     if _G.BlockArcade then break end
                     if not main.Backpack.InGame.Value then continue end
 
