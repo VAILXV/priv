@@ -193,7 +193,7 @@ then
             task.spawn(function()
                 local bot = LocalPlayer
 
-                while task.wait(2.5) do
+                while task.wait(4) do
                     if _G.BlockArcade then break end
                     if not bot.Backpack.InGame.Value then continue end
 
@@ -231,7 +231,7 @@ then
 
                 if LocalPlayer.Backpack.InGame:FindFirstChild("Court")
                 and LocalPlayer.Backpack.InGame.Court.Value == "Court 5" then
-                    wait(60)
+                    wait(70)
                     if _G.BlockArcade then return end
                     TeleportService:TeleportToPlaceInstance(
                         game.PlaceId,
@@ -291,7 +291,7 @@ then
             task.spawn(function()
                 local main = LocalPlayer
 
-                while task.wait(2.5) do
+                while task.wait(4) do
                     if _G.BlockArcade then break end
                     if not main.Backpack.InGame.Value then continue end
 
@@ -333,7 +333,7 @@ then
             task.spawn(function()
                 repeat task.wait(1) until LocalPlayer.Backpack.InGame.Value == true
 
-                task.wait(70)
+                task.wait(80)
 
                 if not _G.BlockArcade then
                     print("🔄 MAIN REJOINING AFTER 70 SEC PLAYMAKING")
