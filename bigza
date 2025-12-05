@@ -1,0 +1,358 @@
+-------------------------------------------------
+-- 🔰 FULL PLAYER LOAD BEFORE ANYTHING RUNS
+-------------------------------------------------
+wait(5)
+repeat task.wait() until game:IsLoaded()
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer or Players.PlayerAdded:Wait()
+
+if not LocalPlayer.Character or not LocalPlayer.Character:FindFirstChild("HumanoidRootPart") then
+    LocalPlayer.CharacterAdded:Wait()
+end
+
+local character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+repeat task.wait() until character:FindFirstChild("HumanoidRootPart")
+
+repeat task.wait() until LocalPlayer:FindFirstChild("Backpack")
+repeat task.wait() until LocalPlayer:FindFirstChild("PlayerScripts")
+task.wait(1)
+
+-------------------------------------------------
+-- GLOBAL CONFIG
+-------------------------------------------------
+
+_G.BlockArcade   = false
+_G.ShotFired     = false
+_G.ShotTime      = 0
+
+-------------------------------------------------
+-- SERVICES
+-------------------------------------------------
+local StarterGui          = game:GetService("StarterGui")
+local VirtualUser         = game:GetService("VirtualUser")
+local TeleportService     = game:GetService("TeleportService")
+local ReplicatedStorage   = game:GetService("ReplicatedStorage")
+local VirtualInputManager = game:GetService("VirtualInputManager")
+local Workspace           = game:GetService("Workspace")
+
+-------------------------------------------------
+-- HELPERS
+-------------------------------------------------
+local function IsMain(name)
+    return name == _G.CONFIG.Main
+end
+
+local function IsBot(name)
+    for _, person in ipairs(_G.CONFIG.Bots) do
+        if person == name then
+            return true
+        end
+    end
+    return false
+end
+
+-------------------------------------------------
+-- 🔥 NONFRIEND DETECTION — MAIN + BOTS ONLY
+-------------------------------------------------
+if IsMain(LocalPlayer.Name) or IsBot(LocalPlayer.Name) then
+    task.spawn(function()
+        while task.wait(1) do
+            for _, player in ipairs(Players:GetPlayers()) do
+                if player ~= LocalPlayer then
+                    local ok, isFriend = pcall(function()
+                        return player:IsFriendsWith(LocalPlayer.UserId)
+                    end)
+
+                    if ok and not isFriend then
+                        warn("⚠ NONFRIEND DETECTED — ARCADE DISABLED + HOPPING")
+
+                        _G.BlockArcade = true
+
+                        StarterGui:SetCore("PromptBlockPlayer", player)
+                        task.wait(0.5)
+
+                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Down, false, game)
+                        task.wait(0.1)
+                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Down, false, game)
+                        task.wait(1)
+
+                        VirtualInputManager:SendKeyEvent(true, Enum.KeyCode.Return, false, game)
+                        task.wait(0.1)
+                        VirtualInputManager:SendKeyEvent(false, Enum.KeyCode.Return, false, game)
+
+                        task.wait(0.5)
+                        TeleportService:Teleport(game.PlaceId)
+                        return
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-------------------------------------------------
+-- 🚫 DISABLE BOT ARCADE IF SERVER > 2 PLAYERS
+-------------------------------------------------
+task.spawn(function()
+    while task.wait(1) do
+        if #Players:GetPlayers() > 2 then
+            _G.BlockArcade = true
+        end
+    end
+end)
+
+-------------------------------------------------
+-- 📢 GLOBAL ANTI-AFK
+-------------------------------------------------
+StarterGui:SetCore("SendNotification", {
+    Title   = "Anti-AFK",
+    Text    = "Running",
+    Duration = 5,
+})
+
+LocalPlayer.Idled:Connect(function()
+    VirtualUser:CaptureController()
+    VirtualUser:ClickButton2(Vector2.new())
+end)
+
+-------------------------------------------------
+-- 🤖 BOT ARCADE LOGIC
+-------------------------------------------------
+if game.PlaceId == 7235817949
+and _G.CONFIG.Mode == "Arcade"
+and IsBot(LocalPlayer.Name)
+then
+    task.spawn(function()
+        wait(3)
+
+        -- 🚫 HARD GATE: If nonfriend / BlockArcade is true → stop instantly
+        if _G.BlockArcade then return end
+        
+        -- 🚫 HARD GATE #2: If ANYONE in server is NOT main/bot → disable bot fully
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr.Name ~= LocalPlayer.Name and plr.Name ~= _G.CONFIG.Main then
+                local isBot = false
+                for _, botName in ipairs(_G.CONFIG.Bots) do
+                    if plr.Name == botName then
+                        isBot = true
+                        break
+                    end
+                end
+
+                if not isBot then
+                    print("⛔ Non-bot detected — bot disabling.")
+                    _G.BlockArcade = true
+                    return
+                end
+            end
+        end
+
+        -------------------------------------------------
+        -- BOT LOGIC START (Only Main + Bot in server)
+        -------------------------------------------------
+        local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+
+        if LocalPlayer.Backpack.InGame.Value == false then
+
+            -------------------------------------------------
+            -- 🟢 BOT WALK LOOP (STOPS WHEN INGAME = TRUE)
+            -------------------------------------------------
+            task.spawn(function()
+                while task.wait() do
+                    if _G.BlockArcade then return end
+
+                    if LocalPlayer.Backpack.InGame.Value == true then
+                        break
+                    end
+
+                    pcall(function()
+                        char:SetPrimaryPartCFrame(CFrame.new(0, 6, -24))
+                    end)
+                end
+            end)
+
+            task.wait(1)
+
+            repeat
+                task.wait()
+                if _G.BlockArcade then return end
+            until Workspace.Twos["Court 5"].teams.queued.team1queued1.Value == _G.CONFIG.Main
+
+            ReplicatedStorage.action:InvokeServer(
+                "join:solo",
+                Workspace.Twos["Court 5"].pads.team2.join,
+                "team2"
+            )
+        end
+
+        -------------------------------------------------
+        -- 🤖 BOT BACKPASS PLAYMAKING (Pass ONLY to MAIN)
+        -------------------------------------------------
+        if _G.CONFIG.Badge == "Playmaking" then
+            task.spawn(function()
+                local bot = LocalPlayer
+
+                while task.wait(2.5) do
+                    if _G.BlockArcade then break end
+                    if not bot.Backpack.InGame.Value then continue end
+
+                    local humFolder = Workspace:FindFirstChild("Humanoids")
+                    if not humFolder then continue end
+
+                    local hum = humFolder:FindFirstChild(bot.Name)
+                    if not hum then continue end
+
+                    local ballConnect = hum:FindFirstChild("BallConnect")
+                    if not (ballConnect and ballConnect.Parent == bot.Character) then
+                        continue
+                    end
+
+                    -- Target MAIN only
+                    local mainPlr = Players:FindFirstChild(_G.CONFIG.Main)
+                    if mainPlr and mainPlr.Character then
+                        ReplicatedStorage.PlayerEvents.Passing:FireServer(
+                            "Pass",
+                            mainPlr.Character,
+                            "Overhead"
+                        )
+                        print("🤖 BackPass BOT → MAIN:", bot.Name, "→", mainPlr.Name)
+                    end
+                end
+            end)
+        end
+
+        -------------------------------------------------
+        -- 🔁 BOT TELEPORT LOOP — Only when in Court 5
+        -------------------------------------------------
+        task.spawn(function()
+            while task.wait(1) do
+                if _G.BlockArcade then return end
+
+                if LocalPlayer.Backpack.InGame:FindFirstChild("Court")
+                and LocalPlayer.Backpack.InGame.Court.Value == "Court 5" then
+                    wait(60)
+                    if _G.BlockArcade then return end
+                    TeleportService:TeleportToPlaceInstance(
+                        game.PlaceId,
+                        game.JobId,
+                        LocalPlayer
+                    )
+                end
+            end
+        end)
+
+    end)
+end
+
+-------------------------------------------------
+-- 🟢 MAIN ARCADE CORE
+-------------------------------------------------
+if IsMain(LocalPlayer.Name)
+and not _G.BlockArcade
+and game.PlaceId == 7235817949
+and _G.CONFIG.Mode == "Arcade"
+then
+    task.spawn(function()
+        wait(3)
+
+        -------------------------------------------------
+        -- MAIN WALK LOOP (STOP WHEN InGame == true)
+        -------------------------------------------------
+        task.spawn(function()
+            local char  = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+            local root  = char:WaitForChild("HumanoidRootPart")
+            local court = Workspace.Twos["Court 5"]
+
+            local args = {
+                "join:solo",
+                court.pads.team1.join,
+                "team1"
+            }
+
+            while task.wait(1) do
+                if _G.BlockArcade then return end
+                if LocalPlayer.Backpack.InGame.Value == true then return end
+
+                if court.teams.queued.team1queued1.Value ~= LocalPlayer.Name then
+                    root.CFrame = CFrame.new(27, 6, -24)
+                    ReplicatedStorage.action:InvokeServer(unpack(args))
+                end
+            end
+        end)
+
+        -----------------------------------------------------------------------
+        -- 🏀 PLAYMAKING BACKPASS (MAIN <-> BOTS ONLY)
+        -----------------------------------------------------------------------
+        if _G.CONFIG.Badge == "Playmaking" then
+            -------------------------------------------------
+            -- MAIN BACKPASS: MAIN → FIRST ONLINE BOT
+            -------------------------------------------------
+            task.spawn(function()
+                local main = LocalPlayer
+
+                while task.wait(2.5) do
+                    if _G.BlockArcade then break end
+                    if not main.Backpack.InGame.Value then continue end
+
+                    local humFolder = Workspace:FindFirstChild("Humanoids")
+                    if not humFolder then continue end
+
+                    local hum = humFolder:FindFirstChild(main.Name)
+                    if not hum then continue end
+
+                    local ballConnect = hum:FindFirstChild("BallConnect")
+                    if not (ballConnect and ballConnect.Parent == main.Character) then
+                        continue
+                    end
+
+                    -- Find first online bot from list
+                    local targetBot = nil
+                    for _, botName in ipairs(_G.CONFIG.Bots) do
+                        local botPlr = Players:FindFirstChild(botName)
+                        if botPlr and botPlr.Character then
+                            targetBot = botPlr
+                            break
+                        end
+                    end
+
+                    if targetBot and targetBot.Character then
+                        ReplicatedStorage.PlayerEvents.Passing:FireServer(
+                            "Pass",
+                            targetBot.Character,
+                            "Overhead"
+                        )
+                        print("👑 BackPass MAIN → BOT:", main.Name, "→", targetBot.Name)
+                    end
+                end
+            end)
+
+            -------------------------------------------------
+            -- MAIN AUTO-REJOIN 70s AFTER InGame = TRUE
+            -------------------------------------------------
+            task.spawn(function()
+                repeat task.wait(1) until LocalPlayer.Backpack.InGame.Value == true
+
+                task.wait(70)
+
+                if not _G.BlockArcade then
+                    print("🔄 MAIN REJOINING AFTER 70 SEC PLAYMAKING")
+                    TeleportService:TeleportToPlaceInstance(
+                        game.PlaceId,
+                        game.JobId,
+                        LocalPlayer
+                    )
+                else
+                    print("⛔ MAIN REJOIN CANCELLED — BlockArcade true")
+                end
+            end)
+        end
+
+        -------------------------------------------------
+        -- (Your other badge modes: Shooting, FinishingAndDefensive, ShootingAndDefense)
+        -- can be re-added under here if you still want them alongside Playmaking.
+        -- Right now, only Playmaking is wired.
+        -------------------------------------------------
+
+    end)
+end
