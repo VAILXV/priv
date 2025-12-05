@@ -333,7 +333,7 @@ then
             task.spawn(function()
                 repeat task.wait(1) until LocalPlayer.Backpack.InGame.Value == true
 
-                task.wait(80)
+                task.wait(100)
 
                 if not _G.BlockArcade then
                     print("🔄 MAIN REJOINING AFTER 70 SEC PLAYMAKING")
